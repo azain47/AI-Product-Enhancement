@@ -3,8 +3,8 @@ import streamlit as st
 from typing import Optional
 # for app
 from ultralytics import YOLO
-from diffusers import DPMSolverMultistepScheduler
-from diffusers import StableDiffusionImg2ImgPipeline
+from diffusers import DDIMScheduler
+# from diffusers import StableDiffusionImg2ImgPipeline
 from diffusers import StableDiffusionInpaintPipeline
 import torch
 
@@ -29,13 +29,13 @@ valid_objects = ['shoe', 'sneaker', 'bottle', 'cup', 'sandal', 'perfume', 'toy',
 @st.cache_resource()
 def load_models():
 
-    scheduler = DPMSolverMultistepScheduler.from_pretrained("stabilityai/stable-diffusion-2-1",
-                                                subfolder="scheduler", use_karras_sigmas=True,
-                                                algorithm_type="sde-dpmsolver++")
-
     inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained('stabilityai/stable-diffusion-2-1',
-                    torch_dtype=torch.float16, use_safetensors=True, variant="fp16", scheduler = scheduler)
-
+                    torch_dtype=torch.float16, use_safetensors=True, variant="fp16")
+    
+    inpaint_pipe.scheduler = DDIMScheduler.from_config(
+            inpaint_pipe.scheduler.config, rescale_betas_zero_snr=True, timestep_spacing="trailing"
+    )
+    
     # img2img_pipe = StableDiffusionImg2ImgPipeline.from_pretrained('stabilityai/stable-diffusion-2-1',
     #                 torch_dtype=torch.float16, use_safetensors=True, variant="fp16", scheduler = scheduler)
     # img2img_pipe.unet = torch.compile(img2img_pipe.unet, mode="reduce-overhead", fullgraph=True)
